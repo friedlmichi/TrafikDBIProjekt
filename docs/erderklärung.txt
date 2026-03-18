@@ -1,44 +1,101 @@
-Heute ist der große Tag der Abgabe! Da ist es absolut sinnvoll, für eventuelle Rückfragen des Dozenten noch tiefer in die Materie eintauchen zu können. Wenn er fragt: *"Warum haben Sie das genau so modelliert?"*, habt ihr damit die perfekten Argumente.
+1. Tabelle: Kategorie (Stammdaten)
+kategorie_id (Primary Key): Die eindeutige Systemnummer. Wird als künstlicher Schlüssel (Surrogatschlüssel) automatisch hochgezählt.
 
-Die folgenden Nummern 1 bis 3 beinhalten die korrekten und fachlich exakten Erklärungen für all eure Tabellen und deren Relationen.
+name: Speichert die Bezeichnung (z.B. "Tabakwaren", "Presse", "Glücksspiel"). Warum? Für spätere Auswertungen (Business Cases). Der Filialleiter will wissen: "Wie viel Umsatz haben wir diesen Monat nur mit Tabak gemacht?"
 
-### 1. Stammdaten und die Kern-Entität (Das Fundament)
-Diese Tabellen speichern Daten, die sich selten ändern. Sie sind die Voraussetzung dafür, dass das System überhaupt arbeiten kann.
+Relationen: Eine Kategorie hat eine 1:n-Beziehung zur Tabelle Artikel. Ein Artikel gehört zu genau einer Kategorie, aber eine Kategorie umfasst viele Artikel.
 
-* **Tabelle `Kategorie` (z. B. Tabak, Presse, Lotto):**
-    * *Was sie macht:* Sie gruppiert eure Waren. Anstatt bei jedem Artikel als Text "Tabak" reinzuschreiben, lagern wir das aus.
-    * *Die Relation (1:n zum Artikel):* Eine Kategorie hat viele Artikel, aber ein Artikel gehört zu genau einer Kategorie. Das ist die korrekte Normalisierung. Würden wir den Kategorienamen direkt in den Artikel schreiben und uns vertippen ("Tbak"), würden Auswertungen falsch laufen.
-* **Tabelle `Lieferant` (z. B. Pressegroßhandel):**
-    * *Was sie macht:* Speichert die Kontaktdaten der Firmen, bei denen die Trafik ihre Ware bestellt.
-    * *Die Relation (1:n zum Artikel & zur Bestellung):* Ein Lieferant liefert viele Artikel. Der Artikel hat die `lieferant_id` als Fremdschlüssel (FK), damit das System bei kritischem Lagerbestand sofort weiß, bei wem nachbestellt werden muss.
-* **Tabelle `Artikel` (Das Herzstück):**
-    * *Was sie macht:* Der zentrale Dreh- und Angelpunkt. Hier liegen Barcode (`ean_code`), Preis, aktueller Bestand und die wichtige `altersfreigabe`.
-    * *Abhängigkeit:* Diese Tabelle ist existenzabhängig von Kategorie und Lieferant. Ohne diese beiden FKs darf ein Artikel nicht angelegt werden.
-* **Tabellen `Kunde` & `Mitarbeiter`:**
-    * *Was sie machen:* Speichern die Personen im System. Der Mitarbeiter braucht eine Rolle (Kassierer vs. Filialleiter), der Kunde (für Abos) zwingend das Geburtsdatum für die Altersprüfung am POS.
+2. Tabelle: Lieferant (Stammdaten)
+lieferant_id (Primary Key): Eindeutige Identifikationsnummer des Großhändlers.
 
-### 2. Transaktions-Kopfdaten (Die Bewegungsdaten)
-Diese Tabellen wachsen jeden Tag rasant an. Sie speichern das "Wann" und "Wer", aber noch nicht das "Was".
+firmenname: Der offizielle Name (z.B. "Moosmayr GmbH").
 
-* **Tabelle `Verkauf` (Der Kassenbon-Kopf):**
-    * *Was sie macht:* Sie dokumentiert einen einzelnen Kassiervorgang an der Kasse. Hier steht nur: Wann wurde kassiert, wie hoch war die Gesamtsumme und welcher Mitarbeiter saß an der Kasse.
-    * *Die Relation (1:n vom Mitarbeiter):* Ein Mitarbeiter macht viele Verkäufe. Die `mitarbeiter_id` liegt als FK hier drin, um am Ende des Tages abrechnen zu können, wer wie viel Umsatz in der Schicht gemacht hat.
-* **Tabelle `Bestellung` (Der Auftrags-Kopf):**
-    * *Was sie macht:* Das exakte Gegenstück zum Verkauf, nur in Richtung Einkauf. Sie dokumentiert, dass am Tag X eine Bestellung beim Lieferanten Y ausgelöst wurde und welchen Status ('offen', 'geliefert') diese hat.
+ansprechpartner: Name der Kontaktperson. Warum? Wenn eine Lieferung falsch ankommt, muss der Mitarbeiter wissen, nach wem er am Telefon fragen muss.
 
-### 3. Die m:n-Auflösungstabellen (Die exakten Details)
+telefon: Die Durchwahl für Nachbestellungen oder Reklamationen.
 
-Hier zeigt ihr dem Dozenten, dass ihr Datenbanken wirklich verstanden habt. Direkte m:n-Beziehungen (Viele-zu-Viele) kann eine relationale Datenbank nicht speichern. Sie müssen in Zwischentabellen aufgelöst werden.
+Relationen: 1:n zu Artikel (Ein Lieferant liefert viele Artikel). 1:n zu Bestellung (Man schickt viele Bestellungen an denselben Lieferanten).
 
-* **Tabelle `Verkaufsposition` (Die Zeilen auf dem Kassenbon):**
-    * *Was sie macht:* Sie verknüpft den Kassenbon (`Verkauf`) mit den gekauften `Artikeln`. Hier wird die gekaufte `menge` und der exakte `einzelpreis` zum Zeitpunkt des Scannens gespeichert. (Wichtig: Der Preis muss hier mitgespeichert werden, falls der Artikel in zwei Wochen teurer wird – alte Kassenbons dürfen sich dadurch rückwirkend nicht verändern!).
-    * *Die Relation (Komposition):* Der zusammengesetzte Primärschlüssel (`verkauf_id` + `artikel_id`) verhindert, dass eine Position ohne Bon existiert. Löscht man den Bon, löscht die Datenbank automatisch die Positionen (`ON DELETE CASCADE`).
-* **Tabelle `Bestellposition` (Die Zeilen auf dem Bestellschein):**
-    * *Was sie macht:* Funktioniert exakt wie die Verkaufsposition. Sie verknüpft eine `Bestellung` mit vielen `Artikeln`. Besonderheit hier: Es gibt ein Feld für `bestellmenge` und eines für `gelieferte_menge`, falls der Lieferant mal zu wenig bringt.
-* **Tabelle `Zeitschriften_Abo` (Die Stammkunden-Reservierung):**
-    * *Was sie macht:* Sie löst auf, dass ein `Kunde` viele `Artikel` (Magazine) abonniert haben kann, und ein Magazin (z.B. Krone) von vielen Kunden abonniert wird. 
-    * *Die Relation:* Sie verbindet `kunde_id` und `artikel_id` und ergänzt das Attribut `wochentag`. So kann das System jeden Donnerstagmorgen eine Liste ausspucken, welche Zeitungen für wen in die Fächer sortiert werden müssen.
+3. Tabelle: Mitarbeiter (Stammdaten)
+mitarbeiter_id (Primary Key): Die Personalnummer für das Login ins Kassensystem.
 
----
+vorname & nachname: Zur namentlichen Begrüßung im System und auf dem Kassenbon ("Sie wurden bedient von...").
 
-Soll ich euch diese Erklärungen als kompaktes PDF-Cheat-Sheet generieren, das ihr euch nachher auf dem Handy durchlesen könnt, während ihr auf euren Präsentations-Slot wartet?
+rolle: Z.B. 'Verkäufer' oder 'Filialleiter'. Warum? Für Berechtigungen. Ein normaler Verkäufer darf kassieren, aber nur der Filialleiter darf vielleicht eine Bestellung beim Lieferanten auslösen oder Tagesabschlüsse ansehen.
+
+Relationen: 1:n zu Verkauf. Ein Mitarbeiter führt über den Tag verteilt viele Verkäufe durch.
+
+4. Tabelle: Kunde (Stammdaten für Abos)
+kunde_id (Primary Key): Eindeutige Kundennummer.
+
+vorname & nachname: Für die Zuordnung der Zeitschriften in die richtigen Abholfächer.
+
+telefon: Warum? Wenn der Kunde seine abonnierte Zeitschrift drei Wochen lang nicht abholt, kann die Trafik ihn anrufen.
+
+geburtsdatum: Warum? Der wichtigste Trick! Wir speichern niemals das Alter als feste Zahl, da diese sich jedes Jahr ändert. Aus dem Geburtsdatum kann das System bei jedem Kauf sekundengenau berechnen, ob der Kunde heute 18 ist.
+
+Relationen: 1:n zu Zeitschriften_Abo. Ein Kunde kann mehrere Abos gleichzeitig haben.
+
+5. Tabelle: Artikel (Das Herzstück)
+artikel_id (Primary Key): Die interne Artikelnummer.
+
+bezeichnung: Der Name, der auf dem Display und dem Kassenbon steht (z.B. "Marlboro Red").
+
+ean_code: Der Barcode. Warum? Das ist der wichtigste Feld für die Kasse (Datenerfassung). Er ist UNIQUE, damit der Scanner genau einen Treffer findet.
+
+verkaufspreis: Der standardmäßige, aktuelle Preis.
+
+lagerbestand: Warum? Für den Business Case "Bestellwesen". Verkauft man etwas, sinkt die Zahl. Kommt eine Lieferung, steigt sie. Fällt sie unter 5, muss bestellt werden.
+
+altersfreigabe: Speichert 0, 16 oder 18. Warum? Für die Konsistenzprüfung. Die Kasse vergleicht diesen Wert mit dem Alter des Käufers.
+
+kategorie_id (Foreign Key): Verknüpft den Artikel mit seiner Kategorie.
+
+lieferant_id (Foreign Key): Sagt dem System, bei wem dieser Artikel nachbestellt werden muss.
+
+Relationen: Der Artikel steht im Zentrum. Er ist abhängig von Kategorie und Lieferant und hat eine 1:n-Beziehung zu den drei Auflösungstabellen (Verkaufsposition, Bestellposition, Abo).
+
+6. Tabelle: Verkauf (Der Kassenbon-Kopf)
+verkauf_id (Primary Key): Die eindeutige Bon-Nummer.
+
+datum_zeit: Der exakte Zeitstempel. Warum? Für den Tagesabschluss zwingend nötig.
+
+gesamtbetrag: Die Summe des gesamten Bons. Warum? Technisch könnte man das auch immer live aus den Positionen berechnen. Es als Feld zu speichern (Redundanz), macht aber Datenbankabfragen für den Tagesumsatz extrem viel schneller.
+
+mitarbeiter_id (Foreign Key): Dokumentiert, wer an der Kasse stand.
+
+Relationen: 1:n zur Verkaufsposition. Ein Bon hat mehrere Zeilen.
+
+7. Tabelle: Verkaufsposition (Die m:n-Auflösung des Verkaufs)
+verkauf_id & artikel_id (Composite Primary Key / Foreign Keys): Beide zusammen bilden den Primärschlüssel. Warum? Es löst die m:n-Beziehung auf. Der zusammengesetzte Schlüssel garantiert, dass derselbe Artikel nicht in zwei getrennten Zeilen auf demselben Bon steht (stattdessen wird die Menge hochgezählt).
+
+menge: Wie oft wurde der Artikel gescannt (z.B. 3x Brieflos).
+
+einzelpreis: Warum? Absolut kritisch! Hier wird der Preis gespeichert, der genau in dieser Sekunde galt. Wenn Zigaretten nächste Woche teurer werden (Änderung in der Tabelle Artikel), darf sich dieser alte Kassenbon rückwirkend auf keinen Fall verändern!
+
+Relationen: Komposition. Diese Tabelle kann nicht ohne die Tabelle Verkauf existieren (ON DELETE CASCADE).
+
+8. Tabelle: Bestellung (Der Auftrags-Kopf)
+bestellung_id (Primary Key): Die interne Auftragsnummer für den Großhändler.
+
+bestelldatum: Wann wurde die Bestellung ausgelöst?
+
+status: Speichert Werte wie 'offen', 'versendet' oder 'geliefert'. Warum? Bildet den Workflow ab. Nur 'gelieferte' Bestellungen dürfen den Lagerbestand der Artikel erhöhen.
+
+lieferant_id (Foreign Key): An welchen Großhändler geht diese Bestellung?
+
+Relationen: 1:n zur Bestellposition.
+
+9. Tabelle: Bestellposition (Die m:n-Auflösung der Bestellung)
+bestellung_id & artikel_id (Composite Primary Key / Foreign Keys): Löst auf, dass auf einem Bestellschein viele Artikel stehen und ein Artikel im Laufe der Zeit auf vielen Bestellscheinen landet.
+
+bestellmenge: Die Menge, die wir angefordert haben.
+
+gelieferte_menge: Warum dieses extra Feld? In der Realität liefert der Großhändler oft weniger, als bestellt wurde (z.B. weil es ausverkauft ist). Um Differenzen zu erkennen, müssen Soll (bestellmenge) und Ist (gelieferte_menge) getrennt gespeichert werden.
+
+10. Tabelle: Zeitschriften_Abo (Die m:n-Auflösung für Kunden)
+kunde_id & artikel_id (Composite Primary Key / Foreign Keys): Löst auf, dass ein Kunde mehrere Magazine abonniert, und ein Magazin von mehreren Kunden abonniert wird.
+
+menge: Wie viele Exemplare möchte der Kunde zurückgelegt haben?
+
+wochentag: Warum? Zeitschriften erscheinen an fixen Tagen. Der Mitarbeiter muss am System filtern können: "Zeige mir alle Abos für 'Donnerstag', damit ich die Fächer befüllen kann."
