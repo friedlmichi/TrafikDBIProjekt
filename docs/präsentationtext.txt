@@ -1,20 +1,10 @@
-🎤 Sprecher 1: Michael (Folie 1 & 2)
-Folie 1: Titelfolie
-"Guten Tag zusammen. Wir – das sind Andreas, Leonhard und ich, Michael – präsentieren euch heute unser Datenmodellierungsprojekt. Wir haben uns für das Thema 'Trafik', also ein klassisches Tabak- und Zeitschriftenfachgeschäft, entschieden. Ich werde euch nun die Anforderungen erläutern, Andreas übernimmt das logische Modell und das ERD, und Leonhard zeigt euch im Anschluss das physische Modell inklusive der DDL-Besonderheiten."
+Das Herzstück (Inventar / Tabelle Artikel): Die Tabelle Artikel bildet das physische Inventar der Trafik ab. Die wichtigste Besonderheit ist hier das Feld artikelnr (z. B. der Barcode). Dieses ist mit einem UNIQUE-Constraint versehen, damit kein Barcode doppelt existieren kann. Zudem speichert der Artikel den aktuellen lagerbestand und die gesetzliche altersfreigabe (0, 16 oder 18).
 
-Folie 2: Identifizierte Anforderungen
-"Um das System sauber aufzusetzen, haben wir zuerst die Kernanforderungen identifiziert. Eine Trafik ist ein Schnell-Dreher-Geschäft. Das Kassensystem muss absolut flüssig laufen. Gleichzeitig haben wir sehr strenge gesetzliche Vorgaben: Wir dürfen Tabak und Lotto nicht an Minderjährige verkaufen, das System muss uns hier also blockieren. Außerdem bietet unsere Trafik den Service an, Zeitschriften für Stammkunden zu reservieren. All das, kombiniert mit dem Bestellwesen beim Lieferanten, bildet die Legitimation für unser nun folgendes Datenmodell."
+Die Architektonische Entkopplung (Bestellung):
+Das Modell verzichtet absichtlich auf eine direkte Fremdschlüssel-Beziehung (Foreign Key) zwischen Bestellposition und Artikel. Das Bindeglied ist rein die artikelnr. Das ist zwingend notwendig, da bei einer Lieferung oft Artikel eintreffen, die das Kassensystem noch gar nicht kennt. Durch die Entkopplung crasht die Datenbank nicht; unbekannte Artikel können nachträglich über eine Prozedur ins Inventar aufgenommen werden.
 
-🎤 Sprecher 2: Andreas (Folie 3 & 4)
-Folie 3: Das logische Datenmodell (ERD)
-"Danke, Michael. Kommen wir zum Herzstück: unserem ERD und dem relationalen Modell. Wir haben die Anforderungen in konkrete Entitäten übersetzt. Im Zentrum steht ganz klar der 'Artikel'. Dieser ist von den Entitäten 'Kategorie' und 'Lieferant' abhängig. Wir haben das bewusst normalisiert, um Update-Anomalien zu vermeiden. Ändert sich zum Beispiel die Telefonnummer eines Großhändlers, müssen wir das in unserem Modell nur an einer einzigen Stelle anpassen und nicht bei hunderten Artikeln."
+Die m:n-Auflösungen (Positionstabellen):
+Direkte m:n-Beziehungen wurden korrekt aufgelöst. Ein Kassenbon (Verkauf) und ein Artikel werden durch die Verkaufsposition verbunden. Diese Tabelle nutzt einen zusammengesetzten Primärschlüssel (verkauf_id + artikel_id), was verhindert, dass derselbe Artikel in zwei separaten Zeilen auf dem gleichen Bon landet. Zudem herrscht hier eine Komposition: Löscht man den Bon, löscht das System per ON DELETE CASCADE auch die Positionen.
 
-Folie 4: Besonderheiten des logischen Modells
-"Bei den Besonderheiten unseres logischen Modells möchte ich drei Dinge hervorheben. Erstens: Wir haben auf eine klassische Generalisierung – also eine Vererbung in Subtypen wie 'Tabakartikel' oder 'Zeitschrift' – verzichtet. Stattdessen nutzen wir die Entität 'Kategorie' und das Attribut 'Altersfreigabe'. Das hält das Modell performant. Zweitens: Wir haben die m:n-Beziehungen zwischen Kassenbon und Artikel über Positionstabellen aufgelöst. Drittens: Hierbei handelt es sich um eine Komposition. Eine Verkaufsposition ist stark existenzabhängig vom Verkauf. Wenn der Kassenbon storniert wird, löscht unser Modell zwingend auch die dazugehörigen Positionen."
-
-🎤 Sprecher 3: Leonhard (Folie 5 & 6)
-Folie 5: Physisches Modell & Datentypen (DDL)
-"Damit übernehme ich den physischen Teil, also die Umsetzung in Oracle SQL. Wir haben unsere Datentypen sehr präzise gewählt. Für Texte nutzen wir das speichereffiziente VARCHAR2. Für alle Währungsbeträge nutzen wir NUMBER(10,2), um exakt zwei Nachkommastellen für die Cent-Beträge zu garantieren. Um die Eingabe zu automatisieren und Fehler zu minimieren, arbeiten wir stark mit DEFAULT-Werten. So wird bei jedem neuen Kassenbon das Datum automatisch auf SYSDATE, also die exakte Systemzeit, gesetzt."
-
-Folie 6: Constraints & Business Cases
-"Die größte Sicherheit im physischen Modell bieten unsere Constraints. Der Barcode, also der EAN-Code, ist mit einem UNIQUE Constraint abgesichert, damit es keine Duplikate gibt. Das wichtigste Constraint ist aber unser CHECK auf die Altersfreigabe, die nur 0, 16 oder 18 sein darf. Kombiniert mit dem Geburtsdatum des Kunden können wir so den Verkauf automatisch sperren. Genau das werden wir in der nächsten Projektphase live in unserem Package demonstrieren: Wir bauen erstens das funktionierende Kassensystem, zweitens die Abo-Ansicht für unsere Zeitschriften und drittens die automatische Nachbestellung beim Lieferanten. Vielen Dank für eure Aufmerksamkeit!"
+Kunden & Abos (Zeitschriften_Abo):
+Der Kunde hängt logischerweise nicht direkt am Artikel. Die Zuordnung von Stammkunden zu ihren reservierten Magazinen passiert über die Zwischentabelle Zeitschriften_Abo. Diese enthält zusätzlich den wochentag, damit die Mitarbeiter Abhollisten filtern können. Beim Kunden wird zudem das geburtsdatum (statt des Alters) gespeichert, um an der Kasse tagesaktuell das Alter für den Tabakverkauf berechnen zu können.

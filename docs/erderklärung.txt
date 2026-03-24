@@ -1,101 +1,107 @@
+Das ist die perfekte Vorbereitung für eventuelle Rückfragen. Wenn der Dozent ins Detail geht und wissen will, warum ein bestimmtes Feld existiert, habt ihr hiermit auf alles eine wasserdichte Antwort.
+
+Die Nummern 1 bis 10 sind die korrekten und detaillierten Erklärungen für absolut jede Tabelle und jedes Feld eures finalen Modells.
+
 1. Tabelle: Kategorie (Stammdaten)
-kategorie_id (Primary Key): Die eindeutige Systemnummer. Wird als künstlicher Schlüssel (Surrogatschlüssel) automatisch hochgezählt.
+kategorie_id (PK): Der Primärschlüssel. Eine künstliche, fortlaufende Nummer zur eindeutigen Identifikation.
 
-name: Speichert die Bezeichnung (z.B. "Tabakwaren", "Presse", "Glücksspiel"). Warum? Für spätere Auswertungen (Business Cases). Der Filialleiter will wissen: "Wie viel Umsatz haben wir diesen Monat nur mit Tabak gemacht?"
+name: Der Name der Warengruppe (z. B. "Tabak", "Presse"). Warum? Weil wir ein UNIQUE Constraint darauf gesetzt haben, kann sich niemand vertippen und versehentlich zweimal "Tabak" anlegen. Das hält Auswertungen sauber.
 
-Relationen: Eine Kategorie hat eine 1:n-Beziehung zur Tabelle Artikel. Ein Artikel gehört zu genau einer Kategorie, aber eine Kategorie umfasst viele Artikel.
+Relationen: 1:n zu Artikel. Eine Kategorie gruppiert viele Artikel, aber ein Artikel hat genau eine Hauptkategorie.
 
 2. Tabelle: Lieferant (Stammdaten)
-lieferant_id (Primary Key): Eindeutige Identifikationsnummer des Großhändlers.
+lieferant_id (PK): Die eindeutige Systemnummer für den Großhändler.
 
-firmenname: Der offizielle Name (z.B. "Moosmayr GmbH").
+firmenname: Der offizielle Name (z. B. "Pressevertrieb GmbH").
 
-ansprechpartner: Name der Kontaktperson. Warum? Wenn eine Lieferung falsch ankommt, muss der Mitarbeiter wissen, nach wem er am Telefon fragen muss.
+ansprechpartner: Name der Kontaktperson für Reklamationen.
 
-telefon: Die Durchwahl für Nachbestellungen oder Reklamationen.
+telefon: Die Durchwahl für schnelle Nachbestellungen.
 
-Relationen: 1:n zu Artikel (Ein Lieferant liefert viele Artikel). 1:n zu Bestellung (Man schickt viele Bestellungen an denselben Lieferanten).
+Relationen: 1:n zu Artikel (liefert diese Waren) und 1:n zu Bestellung (an ihn richten sich die Bestellscheine).
 
 3. Tabelle: Mitarbeiter (Stammdaten)
-mitarbeiter_id (Primary Key): Die Personalnummer für das Login ins Kassensystem.
+mitarbeiter_id (PK): Die Personalnummer, wichtig für den Login ins Kassensystem.
 
-vorname & nachname: Zur namentlichen Begrüßung im System und auf dem Kassenbon ("Sie wurden bedient von...").
+vorname & nachname: Für die namentliche Begrüßung und die Andrucke auf dem Kassenbon.
 
-rolle: Z.B. 'Verkäufer' oder 'Filialleiter'. Warum? Für Berechtigungen. Ein normaler Verkäufer darf kassieren, aber nur der Filialleiter darf vielleicht eine Bestellung beim Lieferanten auslösen oder Tagesabschlüsse ansehen.
+rolle: Speichert z. B. 'Verkäufer' oder 'Filialleiter' (mit dem Default-Wert 'Verkäufer'). Warum? Das System kann darüber Berechtigungen steuern (z. B. darf nur der Filialleiter Stornierungen durchführen).
 
-Relationen: 1:n zu Verkauf. Ein Mitarbeiter führt über den Tag verteilt viele Verkäufe durch.
+Relationen: 1:n zu Verkauf. Ein Mitarbeiter kassiert viele Bons.
 
-4. Tabelle: Kunde (Stammdaten für Abos)
-kunde_id (Primary Key): Eindeutige Kundennummer.
+4. Tabelle: Kunde (Stammdaten)
+kunde_id (PK): Die eindeutige Kundennummer.
 
-vorname & nachname: Für die Zuordnung der Zeitschriften in die richtigen Abholfächer.
+vorname & nachname: Zur Identifikation des Stammkunden.
 
-telefon: Warum? Wenn der Kunde seine abonnierte Zeitschrift drei Wochen lang nicht abholt, kann die Trafik ihn anrufen.
+telefon: Warum? Wenn eine Zeitschrift wochenlang nicht abgeholt wird, kann die Trafik anrufen.
 
-geburtsdatum: Warum? Der wichtigste Trick! Wir speichern niemals das Alter als feste Zahl, da diese sich jedes Jahr ändert. Aus dem Geburtsdatum kann das System bei jedem Kauf sekundengenau berechnen, ob der Kunde heute 18 ist.
+geburtsdatum: Warum? Wir speichern niemals das statische Alter. Das Geburtsdatum erlaubt es dem Kassensystem, sekundengenau zu berechnen, ob der Kunde heute alt genug für Tabak ist.
 
-Relationen: 1:n zu Zeitschriften_Abo. Ein Kunde kann mehrere Abos gleichzeitig haben.
+Relationen: 1:n zu Zeitschriften_Abo.
 
-5. Tabelle: Artikel (Das Herzstück)
-artikel_id (Primary Key): Die interne Artikelnummer.
+5. Tabelle: Artikel (Das entkoppelte Inventar)
+artikel_id (PK): Die interne Systemnummer der Trafik.
 
-bezeichnung: Der Name, der auf dem Display und dem Kassenbon steht (z.B. "Marlboro Red").
+bezeichnung: Der Anzeigename für Kasse und Bon.
 
-ean_code: Der Barcode. Warum? Das ist der wichtigste Feld für die Kasse (Datenerfassung). Er ist UNIQUE, damit der Scanner genau einen Treffer findet.
+artikelnr: Warum? Der wichtigste Punkt! Das ist der fachliche Schlüssel (Barcode/Lieferantennummer). Er hat ein UNIQUE Constraint. Er dient als sicheres Bindeglied für den Wareneingang, ohne dass die Datenbank abstürzt, wenn ein neuer Artikel geliefert wird.
 
-verkaufspreis: Der standardmäßige, aktuelle Preis.
+verkaufspreis: Der standardmäßige Preis im Regal.
 
-lagerbestand: Warum? Für den Business Case "Bestellwesen". Verkauft man etwas, sinkt die Zahl. Kommt eine Lieferung, steigt sie. Fällt sie unter 5, muss bestellt werden.
+lagerbestand: Warum? Der aktuelle reale Bestand (Soll/Ist). Er darf durch ein CHECK-Constraint nie unter 0 fallen.
 
-altersfreigabe: Speichert 0, 16 oder 18. Warum? Für die Konsistenzprüfung. Die Kasse vergleicht diesen Wert mit dem Alter des Käufers.
+altersfreigabe: Warum? Speichert 0, 16 oder 18. Das System gleicht diesen Wert an der Kasse live mit dem Kundengeburtsdatum ab.
 
-kategorie_id (Foreign Key): Verknüpft den Artikel mit seiner Kategorie.
+kategorie_id (FK) & lieferant_id (FK): Verknüpfen den Artikel mit seinen Stammdaten.
 
-lieferant_id (Foreign Key): Sagt dem System, bei wem dieser Artikel nachbestellt werden muss.
-
-Relationen: Der Artikel steht im Zentrum. Er ist abhängig von Kategorie und Lieferant und hat eine 1:n-Beziehung zu den drei Auflösungstabellen (Verkaufsposition, Bestellposition, Abo).
+Relationen: 1:n zu Verkaufsposition und Zeitschriften_Abo. WICHTIG: Keine direkte Relation mehr zur Bestellposition!
 
 6. Tabelle: Verkauf (Der Kassenbon-Kopf)
-verkauf_id (Primary Key): Die eindeutige Bon-Nummer.
+verkauf_id (PK): Die eindeutige Bon-Nummer.
 
-datum_zeit: Der exakte Zeitstempel. Warum? Für den Tagesabschluss zwingend nötig.
+datum_zeit: Warum? Nutzt TIMESTAMP (statt DATE) mit dem Default CURRENT_TIMESTAMP. Ein Kassensystem muss Transaktionen extrem schnell und auf die Millisekunde genau wegschreiben.
 
-gesamtbetrag: Die Summe des gesamten Bons. Warum? Technisch könnte man das auch immer live aus den Positionen berechnen. Es als Feld zu speichern (Redundanz), macht aber Datenbankabfragen für den Tagesumsatz extrem viel schneller.
+gesamtbetrag: Warum? Die redundante Speicherung der Gesamtsumme macht die Berechnung des Tagesabschlusses extrem viel schneller, als wenn die Datenbank bei jeder Abfrage erst alle Positionen aufsummieren müsste.
 
-mitarbeiter_id (Foreign Key): Dokumentiert, wer an der Kasse stand.
+mitarbeiter_id (FK): Dokumentiert fälschungssicher, wer diesen Bon kassiert hat.
 
-Relationen: 1:n zur Verkaufsposition. Ein Bon hat mehrere Zeilen.
+Relationen: 1:n zu Verkaufsposition (Ein Bon hat mehrere Zeilen).
 
-7. Tabelle: Verkaufsposition (Die m:n-Auflösung des Verkaufs)
-verkauf_id & artikel_id (Composite Primary Key / Foreign Keys): Beide zusammen bilden den Primärschlüssel. Warum? Es löst die m:n-Beziehung auf. Der zusammengesetzte Schlüssel garantiert, dass derselbe Artikel nicht in zwei getrennten Zeilen auf demselben Bon steht (stattdessen wird die Menge hochgezählt).
+7. Tabelle: Verkaufsposition (m:n-Auflösung)
+verkauf_id (FK) & artikel_id (FK): Bilden zusammen den Primärschlüssel (Composite Key). Warum? Es verhindert, dass man denselben Artikel auf demselben Bon in zwei getrennten Zeilen speichert (stattdessen erhöht man einfach die Menge).
 
-menge: Wie oft wurde der Artikel gescannt (z.B. 3x Brieflos).
+menge: Wie oft wurde der Artikel gescannt. Muss durch ein CHECK größer als 0 sein.
 
-einzelpreis: Warum? Absolut kritisch! Hier wird der Preis gespeichert, der genau in dieser Sekunde galt. Wenn Zigaretten nächste Woche teurer werden (Änderung in der Tabelle Artikel), darf sich dieser alte Kassenbon rückwirkend auf keinen Fall verändern!
+einzelpreis: Warum? Absolut überlebenswichtig! Wenn ein Artikel in der Stammtabelle morgen 2 Euro teurer wird, darf sich dieser historische Kassenbon von heute nicht mehr verändern. Hier wird der Preis zum exakten Kaufzeitpunkt "eingefroren".
 
-Relationen: Komposition. Diese Tabelle kann nicht ohne die Tabelle Verkauf existieren (ON DELETE CASCADE).
+Relationen: Starke Komposition. Über ON DELETE CASCADE wird die Position sofort gelöscht, falls der Kopf-Bon storniert und aus dem System entfernt wird.
 
 8. Tabelle: Bestellung (Der Auftrags-Kopf)
-bestellung_id (Primary Key): Die interne Auftragsnummer für den Großhändler.
+bestellung_id (PK): Die Auftragsnummer, die an den Lieferanten geht.
 
-bestelldatum: Wann wurde die Bestellung ausgelöst?
+bestelldatum: Das Datum der Auslösung (Default ist SYSDATE).
 
-status: Speichert Werte wie 'offen', 'versendet' oder 'geliefert'. Warum? Bildet den Workflow ab. Nur 'gelieferte' Bestellungen dürfen den Lagerbestand der Artikel erhöhen.
+status: Warum? Bildet den Workflow ab. Ein CHECK-Constraint erlaubt nur 'offen', 'versendet', 'geliefert', 'storniert', 'abgeschlossen'. Nur so weiß die Prozedur, wann sie das Inventar erhöhen darf.
 
-lieferant_id (Foreign Key): An welchen Großhändler geht diese Bestellung?
+lieferant_id (FK): Wer bekommt diesen Auftrag?
 
-Relationen: 1:n zur Bestellposition.
+Relationen: 1:n zu Bestellposition.
 
-9. Tabelle: Bestellposition (Die m:n-Auflösung der Bestellung)
-bestellung_id & artikel_id (Composite Primary Key / Foreign Keys): Löst auf, dass auf einem Bestellschein viele Artikel stehen und ein Artikel im Laufe der Zeit auf vielen Bestellscheinen landet.
+9. Tabelle: Bestellposition (Die entkoppelte m:n-Auflösung)
+bestellung_id (FK) & artikelnr (PK): Bilden zusammen den Primärschlüssel. Warum? Die artikelnr ist KEIN Fremdschlüssel mehr! Das ist die Architektur-Vorgabe des Professors. So können unbekannte Barcodes in der Lieferung stehen, ohne Datenbank-Errors zu verursachen.
 
-bestellmenge: Die Menge, die wir angefordert haben.
+bestellmenge: Das, was wir vom Großhändler angefordert haben.
 
-gelieferte_menge: Warum dieses extra Feld? In der Realität liefert der Großhändler oft weniger, als bestellt wurde (z.B. weil es ausverkauft ist). Um Differenzen zu erkennen, müssen Soll (bestellmenge) und Ist (gelieferte_menge) getrennt gespeichert werden.
+gelieferte_menge: Warum dieses Feld? Lieferanten schicken oft Teillieferungen (z.B. weil etwas ausverkauft ist). Um Schwund und Fehler zu erkennen, müssen Soll (Bestellung) und Ist (Lieferung) getrennt erfasst werden.
 
-10. Tabelle: Zeitschriften_Abo (Die m:n-Auflösung für Kunden)
-kunde_id & artikel_id (Composite Primary Key / Foreign Keys): Löst auf, dass ein Kunde mehrere Magazine abonniert, und ein Magazin von mehreren Kunden abonniert wird.
+Relationen: Komposition zu Bestellung (ON DELETE CASCADE), aber lose Kopplung zu Artikel.
 
-menge: Wie viele Exemplare möchte der Kunde zurückgelegt haben?
+10. Tabelle: Zeitschriften_Abo (Kunden-m:n-Auflösung)
+kunde_id (FK) & artikel_id (FK): Bilden den zusammengesetzten Primärschlüssel. Ein Kunde kann viele Zeitungen abonnieren, eine Zeitung wird von vielen abonniert.
 
-wochentag: Warum? Zeitschriften erscheinen an fixen Tagen. Der Mitarbeiter muss am System filtern können: "Zeige mir alle Abos für 'Donnerstag', damit ich die Fächer befüllen kann."
+menge: Wie viele Exemplare (z. B. 2x die "Krone") der Kunde reserviert. Muss größer 0 sein.
+
+wochentag: Warum? Magazine haben feste Erscheinungstage. Durch dieses Feld kann der Mitarbeiter morgens in APEX eine Liste filtern: "Zeige mir alle Abos, die heute am 'Donnerstag' in die Fächer sortiert werden müssen."
+
+Relationen: Verknüpft Kunde und Artikel sicher miteinander.
