@@ -7,12 +7,11 @@ const BASE_URL = 'https://oracleapex.com/ords/trafik/api';
 async function request(endpoint, method = 'GET', body = null) {
     const options = {
         method,
-        headers: {
-            'Content-Type': 'application/json'
-        }
+        headers: {} // Startet leer
     };
 
     if (body) {
+        options.headers['Content-Type'] = 'application/json';
         options.body = JSON.stringify(body);
     }
 
@@ -79,10 +78,11 @@ export const api = {
     // GET: Alle Abos laden
     getAbos: () => request('/abos'),
     
-    // POST: Abo speichern
+   // POST: Abo speichern
     speichereAbo: (daten) => request('/abos', 'POST', { 
         p_kunde_id: daten.kundeId, 
-        p_artikel_id: daten.artikelId, 
+        // WICHTIG: artikelNr (mit großem N) und .trim() zur Sicherheit!
+        p_artikelnr: daten.artikelNr ? daten.artikelNr.trim() : "", 
         p_menge: daten.menge, 
         p_wochentag: daten.wochentag 
     }),
@@ -94,5 +94,8 @@ export const api = {
         p_telefon: daten.telefon, 
         p_geburtsdatum: daten.geburtsdatum 
     }),
+    // GET: Dashboard aufgeteilt in zwei sichere Aufrufe
     getDashboardStats: () => request('/dashboard/stats'),
+    getDashboardReservierungen: () => request('/dashboard/reservierungen'),
+    loescheArtikel: (artikelNr) => request('/inventar/loeschen', 'POST', { p_artikelnr: artikelNr }),
 };
