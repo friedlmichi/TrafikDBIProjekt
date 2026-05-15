@@ -2,21 +2,31 @@
     import { api } from '$lib/api.js';
     import { onMount } from 'svelte';
 
-    let stats = $state({ gesamtumsatz: 0, anzahl_abos: 0, kritischer_bestand: 0, reservierungen: [] });
+    let stats = $state({ gesamtumsatz: 0, anzahl_abos: 0, kritischer_bestand: 0 });
+    let reservierungen = $state([]);
     let loading = $state(true);
+    let fehlerMeldung = $state("");
 
     onMount(async () => {
         try {
-            const res = await api.getDashboardStats();
-            stats = res.items[0] || res;
+            // Holt beide Datenpakete gleichzeitig!
+            const [statsDaten, resDaten] = await Promise.all([
+                api.getDashboardStats(),
+                api.getDashboardReservierungen()
+            ]);
+
+            // ORDS packt die Ergebnisse immer in ein "items" Array
+            stats = statsDaten.items[0] || stats;
+            reservierungen = resDaten.items || [];
+
         } catch (e) {
+            fehlerMeldung = "Konnte Dashboard nicht laden: " + e.message;
             console.error(e);
         } finally {
             loading = false;
         }
     });
 </script>
-
 <div class="dashboard">
     <div class="page-header">
         <h1>Management Dashboard</h1>
@@ -33,7 +43,7 @@
                     </svg>
                 </div>
             </div>
-            <div class="stat-value">{Number(stats.gesamtumsatz).toFixed(2)} EUR</div>
+            <div class="stat-value">{Number(stats.gesamtumsatz || 0).toFixed(2)} EUR</div>
             <div class="stat-indicator positive">
                 <span class="indicator-dot"></span>
                 Aktuell
@@ -50,26 +60,26 @@
                     </svg>
                 </div>
             </div>
-            <div class="stat-value">{stats.anzahl_abos}</div>
+            <div class="stat-value">{stats.anzahl_abos || 0}</div>
             <div class="stat-indicator neutral">
                 <span class="indicator-dot"></span>
                 Abonnements
             </div>
         </div>
 
-        <div class="stat-card {stats.kritischer_bestand > 0 ? 'warning' : ''}">
+        <div class="stat-card {(stats.kritischer_bestand || 0) > 0 ? 'warning' : ''}">
             <div class="stat-header">
                 <span class="stat-label">Nachzubestellen</span>
-                <div class="stat-icon {stats.kritischer_bestand > 0 ? 'critical' : 'stock'}">
+                <div class="stat-icon {(stats.kritischer_bestand || 0) > 0 ? 'critical' : 'stock'}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                         <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
                     </svg>
                 </div>
             </div>
-            <div class="stat-value">{stats.kritischer_bestand}</div>
-            <div class="stat-indicator {stats.kritischer_bestand > 0 ? 'negative' : 'positive'}">
+            <div class="stat-value">{stats.kritischer_bestand || 0}</div>
+            <div class="stat-indicator {(stats.kritischer_bestand || 0) > 0 ? 'negative' : 'positive'}">
                 <span class="indicator-dot"></span>
-                {stats.kritischer_bestand > 0 ? 'Aktion erforderlich' : 'Lager in Ordnung'}
+                {(stats.kritischer_bestand || 0) > 0 ? 'Aktion erforderlich' : 'Lager in Ordnung'}
             </div>
         </div>
     </div>
@@ -83,7 +93,7 @@
                 </svg>
                 <h2>Anstehende Abholungen</h2>
             </div>
-            <span class="badge">{(stats.reservierungen || []).length} Reservierungen</span>
+            <span class="badge">{reservierungen.length} Reservierungen</span>
         </div>
         
         <div class="table-wrapper">
@@ -97,7 +107,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {#each stats.reservierungen || [] as res}
+                    {#each reservierungen as res}
                         <tr>
                             <td><span class="day-tag">{res.wochentag}</span></td>
                             <td class="customer-name">{res.kunden_name}</td>
