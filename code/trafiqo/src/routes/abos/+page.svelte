@@ -1,6 +1,6 @@
 <script>
-    import { api } from '$lib/api.js';
-    import { onMount } from 'svelte';
+    import { api } from "$lib/api.js";
+    import { onMount } from "svelte";
 
     let aboListe = $state([]);
     let loading = $state(true);
@@ -8,9 +8,20 @@
 
     let zeigePopup = $state(false);
     let formFehler = $state("");
-    let neuesAbo = $state({ kundeId: 1, artikelId: "", menge: 1, wochentag: "Montag" });
-
-    const wochentage = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"];
+    let neuesAbo = $state({
+        kundeId: 1,
+        artikelNr: "",
+        menge: 1,
+        wochentag: "Montag",
+    });
+    const wochentage = [
+        "Montag",
+        "Dienstag",
+        "Mittwoch",
+        "Donnerstag",
+        "Freitag",
+        "Samstag",
+    ];
 
     onMount(async () => {
         await ladeAbos();
@@ -30,15 +41,22 @@
 
     async function handleSpeichern() {
         formFehler = "";
+        console.log(neuesAbo);
+        
         try {
             const result = await api.speichereAbo(neuesAbo);
-            
-            if (result.p_status === 'ERROR') {
+
+            if (result.p_status === "ERROR") {
                 formFehler = result.p_error;
             } else {
                 zeigePopup = false;
                 await ladeAbos();
-                neuesAbo = { kundeId: 1, artikelId: "", menge: 1, wochentag: "Montag" };
+                neuesAbo = {
+                    kundeId: 1,
+                    artikelId: "",
+                    menge: 1,
+                    wochentag: "Montag",
+                };
             }
         } catch (e) {
             formFehler = "Netzwerkfehler: " + e.message;
@@ -50,11 +68,18 @@
     <div class="page-header">
         <div class="header-content">
             <h1>Zeitschriften-Abonnements</h1>
-            <p class="page-subtitle">Reservierungen und wiederkehrende Bestellungen verwalten</p>
+            <p class="page-subtitle">
+                Reservierungen und wiederkehrende Bestellungen verwalten
+            </p>
         </div>
-        <button class="btn-primary" onclick={() => zeigePopup = true}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M12 5v14M5 12h14"/>
+        <button class="btn-primary" onclick={() => (zeigePopup = true)}>
+            <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+            >
+                <path d="M12 5v14M5 12h14" />
             </svg>
             Neue Reservierung
         </button>
@@ -67,9 +92,14 @@
         </div>
     {:else if fehlerMeldung}
         <div class="error-state">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10"/>
-                <path d="M12 8v4M12 16h.01"/>
+            <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+            >
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 8v4M12 16h.01" />
             </svg>
             {fehlerMeldung}
         </div>
@@ -77,9 +107,17 @@
         <div class="table-card">
             <div class="table-header">
                 <div class="header-info">
-                    <svg class="header-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                        <path d="M19 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V5a2 2 0 00-2-2z"/>
-                        <path d="M7 7h10M7 12h10M7 17h6"/>
+                    <svg
+                        class="header-icon"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.5"
+                    >
+                        <path
+                            d="M19 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V5a2 2 0 00-2-2z"
+                        />
+                        <path d="M7 7h10M7 12h10M7 17h6" />
                     </svg>
                     <span>Aktive Reservierungen</span>
                 </div>
@@ -98,28 +136,49 @@
                     <tbody>
                         {#each aboListe as abo}
                             <tr>
-                                <td><span class="day-tag">{abo.wochentag}</span></td>
+                                <td
+                                    ><span class="day-tag">{abo.wochentag}</span
+                                    ></td
+                                >
                                 <td>
                                     <div class="customer-info">
-                                        <span class="customer-name">{abo.kunden_name}</span>
-                                        <span class="customer-id">ID: {abo.kunde_id}</span>
+                                        <span class="customer-name"
+                                            >{abo.kunden_name}</span
+                                        >
+                                        <span class="customer-id"
+                                            >ID: {abo.kunde_id}</span
+                                        >
                                     </div>
                                 </td>
                                 <td>{abo.zeitschrift_name}</td>
                                 <td class="text-center">
-                                    <span class="quantity-badge">{abo.menge}</span>
+                                    <span class="quantity-badge"
+                                        >{abo.menge}</span
+                                    >
                                 </td>
                             </tr>
                         {:else}
                             <tr>
                                 <td colspan="4" class="empty-state">
                                     <div class="empty-content">
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                                            <path d="M19 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V5a2 2 0 00-2-2z"/>
-                                            <path d="M7 7h10M7 12h10M7 17h6"/>
+                                        <svg
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            stroke-width="1.5"
+                                        >
+                                            <path
+                                                d="M19 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V5a2 2 0 00-2-2z"
+                                            />
+                                            <path d="M7 7h10M7 12h10M7 17h6" />
                                         </svg>
-                                        <span>Keine aktiven Reservierungen</span>
-                                        <button class="btn-link" onclick={() => zeigePopup = true}>Erste Reservierung anlegen</button>
+                                        <span>Keine aktiven Reservierungen</span
+                                        >
+                                        <button
+                                            class="btn-link"
+                                            onclick={() => (zeigePopup = true)}
+                                            >Erste Reservierung anlegen</button
+                                        >
                                     </div>
                                 </td>
                             </tr>
@@ -135,9 +194,16 @@
     <div class="modal-overlay">
         <div class="modal-box">
             <div class="modal-header">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <path d="M19 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V5a2 2 0 00-2-2z"/>
-                    <path d="M7 7h10M7 12h10M7 17h6"/>
+                <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                >
+                    <path
+                        d="M19 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V5a2 2 0 00-2-2z"
+                    />
+                    <path d="M7 7h10M7 12h10M7 17h6" />
                 </svg>
                 Zeitschrift reservieren
             </div>
@@ -147,20 +213,31 @@
                         <label>Kunden-ID</label>
                         <input type="number" bind:value={neuesAbo.kundeId} />
                     </div>
-                    
+
                     <div class="input-group">
-                        <label>Artikel-ID</label>
-                        <input type="number" bind:value={neuesAbo.artikelId} placeholder="Zeitschriften-ID" />
+                        <label>Artikel-Barcode</label>
+                        <input
+                            type="text"
+                            bind:value={neuesAbo.artikelNr}
+                            placeholder="Barcode der Zeitschrift scannen..."
+                        />
                     </div>
-                    
+
                     <div class="input-group">
                         <label>Menge</label>
-                        <input type="number" min="1" bind:value={neuesAbo.menge} />
+                        <input
+                            type="number"
+                            min="1"
+                            bind:value={neuesAbo.menge}
+                        />
                     </div>
-                    
+
                     <div class="input-group">
                         <label>Abholtag</label>
-                        <select bind:value={neuesAbo.wochentag} class="select-input">
+                        <select
+                            bind:value={neuesAbo.wochentag}
+                            class="select-input"
+                        >
                             {#each wochentage as tag}
                                 <option value={tag}>{tag}</option>
                             {/each}
@@ -173,8 +250,13 @@
                 {/if}
             </div>
             <div class="modal-footer">
-                <button class="btn-secondary" onclick={() => zeigePopup = false}>Abbrechen</button>
-                <button class="btn-primary" onclick={handleSpeichern}>Reservieren</button>
+                <button
+                    class="btn-secondary"
+                    onclick={() => (zeigePopup = false)}>Abbrechen</button
+                >
+                <button class="btn-primary" onclick={handleSpeichern}
+                    >Reservieren</button
+                >
             </div>
         </div>
     </div>
@@ -284,7 +366,9 @@
     }
 
     @keyframes spin {
-        to { transform: rotate(360deg); }
+        to {
+            transform: rotate(360deg);
+        }
     }
 
     .error-state {
@@ -347,7 +431,8 @@
         border-collapse: collapse;
     }
 
-    th, td {
+    th,
+    td {
         padding: 16px 24px;
         text-align: left;
     }
@@ -509,7 +594,8 @@
         letter-spacing: 0.03em;
     }
 
-    .input-group input, .select-input {
+    .input-group input,
+    .select-input {
         padding: 12px 14px;
         border: 1px solid #e6e9ef;
         border-radius: 8px;
@@ -519,7 +605,8 @@
         transition: border-color 0.2s ease;
     }
 
-    .input-group input:focus, .select-input:focus {
+    .input-group input:focus,
+    .select-input:focus {
         border-color: #1a1f36;
         outline: none;
     }
