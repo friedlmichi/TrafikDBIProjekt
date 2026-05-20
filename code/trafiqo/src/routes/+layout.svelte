@@ -79,6 +79,15 @@
     :global(*) {
         box-sizing: border-box;
     }
+    .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 24px 20px;
+    border-bottom: 1px solid #e6e9ef;
+}
+
+
 
     .app-layout {
         display: flex;
@@ -197,7 +206,12 @@
         font-size: 0.8rem;
         color: #697386;
     }
-
+.app-logo {
+    width: 42px;         /* Passt die Größe an die Sidebar an */
+    height: 42px;
+    object-fit: contain; /* Verhindert, dass das Logo verzerrt wird */
+    border-radius: 8px;  /* Macht die Ecken leicht rund, falls es einen Hintergrund hat */
+}
     .content {
         flex-grow: 1;
         padding: 32px 40px;
